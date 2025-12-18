@@ -9,18 +9,24 @@
          {{ currentIndex + 1 }} / {{ totalLooks }}
         </div>
 
-        <button class="nav nav-left"
+        <button class="nav nav-btn nav-left"
                 @click="prev"
-                :disabled="currentIndex === 0">‹</button>
+                :disabled="currentIndex === 0">
+          <SvgIcon name="left" size="24" />
+        </button>
 
-        <button class="nav nav-right"
+        <button class="nav nav-btn nav-right"
                 @click="next"
-                :disabled="currentIndex === totalLooks - 1">›</button>
+                :disabled="currentIndex === totalLooks - 1">
+          <SvgIcon name="right" size="24" />
+        </button>
       </div>
 
       <!-- RIGHT -->
       <div class="modal-right">
-        <button class="close-btn" @click="close">×</button>
+        <button class="close-btn" @click="close">
+          <SvgIcon name="delete" size="24" />
+        </button>
 
         <div
           v-for="item in look.items"
@@ -29,12 +35,7 @@
         >
           <img :src="item.image" class="item-img" />
 
-          <div class="item-info">
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-desc">{{ item.description }}</div>
-            <div class="item-price">${{ item.price }}</div>
-            <a :href="item.url" target="_blank" class="item-link">SHOP</a>
-          </div>
+          <ProductInfo :item="item" variant="item" :show-link="true" />
         </div>
 
       </div>
@@ -43,6 +44,9 @@
 </template>
 
 <script setup>
+import SvgIcon from './SvgIcon.vue';
+import ProductInfo from './ProductInfo.vue';
+
 const props = defineProps({
   look: Object,
   currentIndex: Number,
@@ -71,13 +75,13 @@ function next() { emit('next'); }
 /* MAIN MODAL */
 .modal-main {
   display: flex;
-  width: 760px;
+  width: 47.5rem;
   max-width: 92vw;
-  height: 520px;
-  background: #fff;
-  border-radius: 16px;
+  height: 32.5rem;
+  background: var(--bg-primary);
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.2);
+  box-shadow: 0 0.75rem 2.25rem rgba(0,0,0,0.2);
   position: relative;
 }
 
@@ -86,7 +90,7 @@ function next() { emit('next'); }
 .modal-left {
   position: relative;
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,13 +104,13 @@ function next() { emit('next'); }
 
 .look-counter {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #767676;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 16px;
+  top: 1rem;
+  right: 1rem;
+  background: var(--text-tertiary);
+  color: var(--text-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 62.4375rem;
+  font-size: 1rem;
   font-weight: 400;
   letter-spacing: 0.08em;
 
@@ -118,28 +122,45 @@ function next() { emit('next'); }
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.9);
+  background: var(--bg-primary);
+  opacity: 0.9;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.15);
   transition: transform 0.15s ease, background 0.15s ease;
   z-index: 2;
+  padding:0;
 }
 
-.nav-left { left: 16px; }
-.nav-right { right: 16px; }
+.nav-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--main-secondary-default);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.1);
+  transition: background 0.2s, transform 0.2s;
+  outline: none;
+  padding: 0;
+}
+
+.nav-left { left: 1rem; }
+.nav-right { right: 1rem; }
 
 .nav:hover:not(:disabled) {
   transform: translateY(-50%) scale(1.05);
-  background: #fff;
+  background: var(--bg-primary);
 }
 
 .nav:disabled {
@@ -150,26 +171,26 @@ function next() { emit('next'); }
 /* RIGHT SIDE */
 .modal-right {
   flex: 1;
-  padding: 32px 5px 32px 20px;
+  padding: 2rem 0.3125rem 2rem 1.25rem;
   overflow-y: auto;
-  background: #fff;
+  background: var(--bg-primary);
   position: relative;
 }
 
 /* CLOSE BUTTON */
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 36px;
-  height: 36px;
-  background: #e6e6e6;
+  top: 0.625rem;
+  right: 0.625rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--other-tertiary);
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   font-size: 1rem;
   font-weight: 500;
   line-height: 1;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -177,63 +198,32 @@ function next() { emit('next'); }
   transition: background 0.15s ease, transform 0.15s ease;
 }
 .close-btn:hover {
-  background: #dcdcdc;
+  background: var(--main-secondary-hover);
   transform: scale(1.05);
 }
 
 /* PRODUCT LIST */
 .item-row {
   display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 5px;
-  margin-top: 20px;
+  grid-template-columns: 10rem 1fr;
+  gap: 0.3125rem;
+  margin-top: 1.25rem;
 }
 
 .item-img {
-  width: 160px;
-  height: 192px;
+  width: 10rem;
+  height: 12rem;
   object-fit: contain;
 }
 
-.item-info {
-  text-align: left;
-}
-
-.item-name {
-  color: #000;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-.item-desc {
-  font-weight: 400;
-  font-size: 16px;
-  color: #757575;
-  margin: 4px 0;
-  line-height: 1.3;
-}
-
-.item-price {
-  font-weight: 400;
-  font-size: 16px;
-  margin: 25px 0;
-}
-
-.item-link {
-  font-weight: 400;
-  font-size: 16px;
-  text-decoration: underline;
-  color: #000;
-}
 
 /* SCROLLBAR */
 .modal-right::-webkit-scrollbar {
-  width: 6px;
+  width: 0.375rem;
 }
 .modal-right::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 3px;
+  background: var(--other-default);
+  border-radius: 0.1875rem;
 }
 
 /* MOBILE */
@@ -246,31 +236,22 @@ function next() { emit('next'); }
   }
 
   .modal-left {
-    height: 300px;
+    height: 18.75rem;
   }
 
   .modal-right {
-    padding: 16px;
-  }
-
-  .item-info {
-    text-align: left;
+    padding: 1rem;
   }
 
   .item-row {
-    grid-template-columns: 80px 1fr;
-    gap: 12px;
-    margin-bottom: 24px;
+    grid-template-columns: 5rem 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .item-img {
-    width: 80px;
-    height: 80px;
+    width: 5rem;
+    height: 5rem;
   }
-
-  .item-name { font-size: 14px; }
-  .item-desc { font-size: 12px; }
-  .item-price { font-size: 14px; }
-  .item-link { font-size: 12px; }
 }
 </style>

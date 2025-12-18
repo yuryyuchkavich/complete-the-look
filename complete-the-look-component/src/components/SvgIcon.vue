@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue'
-
 const props = defineProps({
     name: {
         type: String,
@@ -11,7 +10,6 @@ const props = defineProps({
         default: '24'
     }
 })
-
 const iconHref = computed(() => {
     return `/icons.svg#${props.name}`
 });
@@ -29,4 +27,3 @@ const iconHref = computed(() => {
     fill: transparent;
 }
 </style>
-

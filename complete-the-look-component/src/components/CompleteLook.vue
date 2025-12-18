@@ -3,8 +3,12 @@
     <div class="nav-header">
       <h2>Complete the Look</h2>
       <div class="nav-top">
-        <button class="nav-btn" @click="prevLook" :disabled="currentLook === 0">‹</button>
-        <button class="nav-btn" @click="nextLook" :disabled="currentLook + cardsPerPage >= looks.length">›</button>
+        <button class="nav-btn" @click="prevLook" :disabled="currentLook === 0">
+          <SvgIcon name="left" size="24" />
+        </button>
+        <button class="nav-btn" @click="nextLook" :disabled="currentLook + cardsPerPage >= looks.length">
+          <SvgIcon name="right" size="24" />
+        </button>
       </div>
     </div>
 
@@ -18,8 +22,8 @@
         >
           <div
             class="look-image"
-            @mouseenter="hoveredLook = look.id"
-            @mouseleave="hoveredLook = null"
+            @mouseenter="handleLookImageEnter(look.id)"
+            @mouseleave="handleLookImageLeave"
           >
             <ImageItem 
               :src="look.image" 
@@ -29,24 +33,13 @@
             />
 
             <!-- HOTSPOTS -->
-            <a
+            <Hotspot
               v-for="item in look.items"
               :key="item.id"
-              v-if="hoveredLook === look.id"
-              :href="item.url"
-              target="_blank"
-              class="hotspot"
+              :item="item"
               :style="getHotspotStyle(item, look)"
-              @mouseenter="activeItem = item"
-              @mouseleave="activeItem = null"
-            >
-              <span class="dot"></span>
-              <div v-if="activeItem?.id === item.id" class="tooltip">
-                <strong>{{ item.name }}</strong><br />
-                <span class="description">{{ activeItem.description }}</span><br />
-                ${{ activeItem.price }}
-              </div>
-            </a>
+              :visible="hoveredLook === look.id"
+            />
 
             <!-- View look button -->
             <button
@@ -64,6 +57,7 @@
     <Popup
       ref="popupRef"
       :noHeader="true"
+      :showCloseButton="false"
       @hide="closeModal"
     >
       <template #basepopup-content-wrapper>
@@ -82,14 +76,21 @@
 
             <button class="nav nav-left"
                     @click="prevModalLook"
-                    :disabled="selectedLook === 0">‹</button>
+                    :disabled="selectedLook === 0">
+              <SvgIcon name="left" size="24" />
+            </button>
 
             <button class="nav nav-right"
                     @click="nextModalLook"
-                    :disabled="selectedLook === props.looks.length - 1">›</button>
+                    :disabled="selectedLook === props.looks.length - 1">
+              <SvgIcon name="right" size="24" />
+            </button>
           </div>
 
           <div class="modal-right">
+            <button class="modal-close-btn" @click="closeModal">
+              <SvgIcon name="delete" size="20" />
+            </button>
             <div
               v-for="item in props.looks[selectedLook]?.items"
               :key="item.id"
@@ -103,12 +104,7 @@
                 class="item-img"
               />
 
-              <div class="item-info">
-                <div class="item-name">{{ item.name }}</div>
-                <div class="item-desc">{{ item.description }}</div>
-                <div class="item-price">${{ item.price }}</div>
-                <a :href="item.url" target="_blank" class="item-link">SHOP</a>
-              </div>
+              <ProductInfo :item="item" variant="item" :show-link="true" />
             </div>
           </div>
         </div>
@@ -121,6 +117,9 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Popup from './Popup/Popup.vue';
 import ImageItem from './ImageItem.vue';
+import Hotspot from './Hotspot.vue';
+import SvgIcon from './SvgIcon.vue';
+import ProductInfo from './ProductInfo.vue';
 
 const props = defineProps({
   looks: Array
@@ -153,8 +152,29 @@ function nextModalLook() {
 
 const currentLook = ref(0);
 const hoveredLook = ref(null);
-const activeItem = ref(null);
 const lookRefs = ref({});
+let hoverTimeout = null;
+
+function handleLookImageEnter(lookId) {
+  // Отменяем таймер закрытия, если он был установлен
+  if (hoverTimeout) {
+    clearTimeout(hoverTimeout);
+    hoverTimeout = null;
+  }
+  hoveredLook.value = lookId;
+}
+
+function handleLookImageLeave() {
+  // Не скрываем точки сразу, даем время навести на тултип
+  hoverTimeout = setTimeout(() => {
+    // Проверяем, есть ли активные тултипы
+    const activeTooltip = document.querySelector('.tooltip');
+    if (!activeTooltip) {
+      hoveredLook.value = null;
+    }
+    hoverTimeout = null;
+  }, 200);
+}
 
 function setLookRef(el, id) {
   if (el) lookRefs.value[id] = el;
@@ -177,6 +197,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateCardsPerPage);
+  if (hoverTimeout) {
+    clearTimeout(hoverTimeout);
+  }
 });
 
 
@@ -212,21 +235,46 @@ function getHotspotStyle(item, look) {
 
 <style scoped>
 .complete-look {
-  padding: 24px;
+  padding: 1.5rem;
+}
+
+:deep(.popup--noheader .basepopup-content) {
+  width: auto;
+  max-width: none;
+  max-height: 90vh;
+}
+
+:deep(.basepopup-overlay) {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+@media (max-width: 768px) {
+  :deep(.popup--noheader .basepopup-content) {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  :deep(.basepopup) {
+    z-index: 99999 !important;
+  }
 }
 
 .nav-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .nav-header h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 1.5rem;
   flex: 1;
   text-align: left;
    font-weight: normal;
@@ -234,59 +282,58 @@ function getHotspotStyle(item, look) {
 
 .nav-top {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
-  background: #f7f7f7;
+  background: var(--main-secondary-default);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 0.125rem 0.375rem rgba(0,0,0,0.1);
   transition: background 0.2s, transform 0.2s;
+  outline: none;
+  padding: 0;
 }
 
 .nav-btn:hover:not(:disabled) {
-  background: #eaeaea;
+  background: var(--main-secondary-hover);
   transform: scale(1.05);
 }
 
 .nav-btn:disabled {
-  background: #f7f7f7;
-  color: #ccc;
+  background: var(--main-secondary-default);
+  color: var(--other-secondary);
   cursor: default;
 }
 
-.nav-btn svg {
-  width: 28px;
-  height: 28px;
+.nav-btn .svg-icon {
   display: block;
 }
-
 
 .looks-wrapper {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding-bottom: 16px;
+  padding-bottom: 1rem;
 }
 
 .looks {
   display: flex;
-  gap: 24px;
+  gap: 1.5rem;
   flex: 1;
 }
 
 .look-card {
-  flex: 0 0 calc(100% / 3 - 16px);
-  min-width: 200px;
-  height: 460px;
-  border-radius: 16px;
+  flex: 0 0 calc(100% / 3 - 1rem);
+  min-width: 12.5rem;
+  height: 28.75rem;
+  border-radius: 1rem;
   overflow: hidden;
   position: relative;
 }
@@ -303,80 +350,27 @@ function getHotspotStyle(item, look) {
   object-fit: cover;
 }
 
-.hotspot {
-  position: absolute;
-  transform: translate(-50%, -50%) scale(0.5);
-  cursor: pointer;
-  width: 20px;
-  height: 20px;
-  display: block;
-  opacity: 0;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  text-decoration: none;
-}
-
-.look-image:hover .hotspot {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-.dot {
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  border: 2px solid #888;
-  border-radius: 50%;
-  box-sizing: border-box;
-  display: block;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.hotspot:hover .dot {
-  transform: scale(1.3);
-  box-shadow: 0 0 6px rgba(0,0,0,0.25);
-}
-
-.tooltip {
-  position: absolute;
-  bottom: 100%; 
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background: #fff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  white-space: normal;
-  width: 150px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
-  font-size: 10px;
-  z-index: 9999;
-  color: #000;
-  text-align: left;
-}
-
-.tooltip .description {
-  color: #888;
-}
-
 /* View look button */
 .view-look-btn.overlay {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
-  background: rgba(255,255,255,0.95);
+  bottom: 1rem;
+  left: 1rem;
+  background: var(--bg-primary);
+  opacity: 0.95;
   border: none;
-  border-radius: 24px;
+  border-radius: 1.5rem;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,.15);
   display: flex;
   align-items: center;
   overflow: hidden;
-  width: 40px;
-  padding: 10px 12px;
+  width: 2.5rem;
+  padding: 0.625rem 0.75rem;
   transition: width 0.3s ease, padding 0.3s ease;
 }
 
 .view-look-btn.overlay.expanded {
-  width: 170px;
+  width: 10.625rem;
 }
 
 .view-look-btn .icon {
@@ -384,7 +378,7 @@ function getHotspotStyle(item, look) {
 }
 
 .view-look-btn .btn-text {
-  margin-left: 8px;
+  margin-left: 0.5rem;
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.3s;
@@ -396,7 +390,7 @@ function getHotspotStyle(item, look) {
 
 @media (max-width: 992px) {
   .look-card {
-    flex: 0 0 calc(50% - 12px);
+    flex: 0 0 calc(50% - 0.75rem);
   }
 }
 
@@ -407,7 +401,7 @@ function getHotspotStyle(item, look) {
   }
 
   .nav-top {
-    margin-top: 8px;
+    margin-top: 0.5rem;
   }
 
   .look-card {
@@ -417,169 +411,278 @@ function getHotspotStyle(item, look) {
 
 .modal-content {
   display: flex;
-  background: #fff;
-  border-radius: 16px;
+  background: var(--bg-primary);
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 12px 36px rgba(0,0,0,0.2);
+  box-shadow: none;
   position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 87.5rem;
+  max-height: 85vh;
 }
 
 .modal-left {
   position: relative;
   flex: 1;
-  background: #f5f5f5;
+  background: var(--bg-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 0;
 }
 
 .modal-left .look-image :deep(.image__item) {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  width: 100%;
+  height: 100%;
 }
 
 .look-counter {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #767676;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.03125rem;
   pointer-events: none;
+  z-index: 3;
 }
 
 .modal-left .nav {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.9);
+  background: var(--bg-primary);
+  opacity: 0.95;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
-  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
   z-index: 2;
+  color: var(--text-primary);
+  outline: none;
+  padding: 0;
 }
 
-.modal-left .nav-left { left: 16px; }
-.modal-left .nav-right { right: 16px; }
+.modal-left .nav:focus,
+.modal-left .nav:focus-visible {
+  outline: none;
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.modal-left .nav-left { 
+  left: 1.25rem; 
+}
+
+.modal-left .nav-right { 
+  right: 1.25rem; 
+}
 
 .modal-left .nav:hover:not(:disabled) {
-  transform: translateY(-50%) scale(1.05);
-  background: #fff;
+  transform: translateY(-50%) scale(1.1);
+  background: var(--bg-primary);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
 }
 
 .modal-left .nav:disabled {
-  opacity: 0.35;
-  cursor: default;
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .modal-right {
-  flex: 1;
-  padding: 32px 5px 32px 20px;
+  flex: 0 0 30rem;
+  min-width: 0;
+  padding: 0;
   overflow-y: auto;
-  background: #fff;
+  overflow-x: hidden;
+  background: var(--bg-primary);
   position: relative;
 }
 
+.modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: var(--main-secondary-default);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  color: var(--text-primary);
+  transition: opacity 0.2s ease;
+  border-radius: 0.25rem;
+}
+
+.modal-close-btn:hover {
+  background: var(--main-secondary-hover);
+  opacity: 1;
+}
+
 .item-row {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 5px;
-  margin-top: 20px;
+  display: flex;
+  padding: 1.5rem 2rem;
+  gap: 1.25rem;
+  align-items: flex-start;
 }
 
 .item-img :deep(.image__item) {
-  width: 160px;
-  height: 192px;
-  object-fit: contain;
+  width: 7.5rem;
+  height: 9rem;
+  object-fit: cover;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
 }
 
-.item-info {
-  text-align: left;
-}
-
-.item-name {
-  color: #000;
-  font-weight: 400;
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-.item-desc {
-  font-weight: 400;
-  font-size: 16px;
-  color: #757575;
-  margin: 4px 0;
-  line-height: 1.3;
-}
-
-.item-price {
-  font-weight: 400;
-  font-size: 16px;
-  margin: 25px 0;
-}
-
-.item-link {
-  font-weight: 400;
-  font-size: 16px;
-  text-decoration: underline;
-  color: #000;
-}
 
 .modal-right::-webkit-scrollbar {
-  width: 6px;
+  width: 0.5rem;
+}
+
+.modal-right::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
 }
 
 .modal-right::-webkit-scrollbar-thumb {
-  background: #ddd;
-  border-radius: 3px;
+  background: var(--other-default);
+  border-radius: 0.25rem;
+}
+
+.modal-right::-webkit-scrollbar-thumb:hover {
+  background: var(--other-secondary);
+}
+
+@media (max-width: 1024px) {
+  .modal-content {
+    flex-direction: column;
+    max-height: 90vh;
+    width: 100%;
+  }
+
+  .modal-left {
+    flex: 0 0 auto;
+    min-height: 50vh;
+    max-height: 50vh;
+  }
+
+  .modal-right {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    max-height: 40vh;
+  }
 }
 
 @media (max-width: 768px) {
   .modal-content {
-    flex-direction: column;
-    height: auto;
+    max-height: 95vh;
+    border-radius: 0;
   }
 
   .modal-left {
-    height: 300px;
+    min-height: 40vh;
+    max-height: 45vh;
   }
 
   .modal-right {
-    padding: 16px;
-  }
-
-  .item-info {
-    text-align: left;
+    max-height: 55vh;
   }
 
   .item-row {
-    grid-template-columns: 80px 1fr;
-    gap: 12px;
-    margin-bottom: 24px;
+    padding: 1rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .item-img :deep(.image__item) {
-    width: 80px;
-    height: 80px;
+    width: 5rem;
+    height: 6.25rem;
   }
 
-  .item-name { font-size: 14px; }
-  .item-desc { font-size: 12px; }
-  .item-price { font-size: 14px; }
-  .item-link { font-size: 12px; }
+  .look-counter {
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .modal-left .nav {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .modal-left .nav-left {
+    left: 0.75rem;
+  }
+
+  .modal-left .nav-right {
+    right: 0.75rem;
+  }
+
+  .modal-close-btn {
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .complete-look {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .modal-left {
+    min-height: 35vh;
+    max-height: 40vh;
+  }
+
+  .modal-right {
+    max-height: 60vh;
+  }
+
+  .item-row {
+    padding: 0.75rem;
+    gap: 0.625rem;
+  }
+
+  .item-img :deep(.image__item) {
+    width: 4.375rem;
+    height: 5.625rem;
+  }
+
+  .modal-left .nav {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .modal-left .nav-left {
+    left: 0.5rem;
+  }
+
+  .modal-left .nav-right {
+    right: 0.5rem;
+  }
 }
 </style>

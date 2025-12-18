@@ -133,7 +133,7 @@ export default {
         bottom: 0;
         right: 0;
         left: 0;
-        z-index: 50;
+        z-index: 1000;
         font-size: 0;
         height: 100vh;
         display: flex;
@@ -576,6 +576,23 @@ export default {
 
         .basepopup-wrapper{
             width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .basepopup-overlay{
+            width: 100%;
+            height: 100%;
+        }
+
+        .basepopup-content{
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100%;
+            max-height: 100vh;
+            border-radius: 0 !important;
         }
 
         .basepopup-content > .delete-icon{
