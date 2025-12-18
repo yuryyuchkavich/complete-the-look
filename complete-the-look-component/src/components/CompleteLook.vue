@@ -21,7 +21,12 @@
             @mouseenter="hoveredLook = look.id"
             @mouseleave="hoveredLook = null"
           >
-            <img :src="look.image" :alt="look.name" />
+            <ImageItem 
+              :src="look.image" 
+              :alt="look.name" 
+              :uid="'look-' + look.id"
+              :initial="true"
+            />
 
             <!-- HOTSPOTS -->
             <a
@@ -64,7 +69,13 @@
       <template #basepopup-content-wrapper>
         <div class="modal-content">
           <div class="modal-left">
-            <img :src="props.looks[selectedLook]?.image" class="look-image" />
+            <ImageItem 
+              :src="props.looks[selectedLook]?.image" 
+              :alt="props.looks[selectedLook]?.name"
+              :uid="'modal-look-' + selectedLook"
+              :initial="true"
+              class="look-image"
+            />
             <div class="look-counter">
               {{ selectedLook + 1 }} / {{ props.looks.length }}
             </div>
@@ -84,7 +95,13 @@
               :key="item.id"
               class="item-row"
             >
-              <img :src="item.image" class="item-img" />
+              <ImageItem 
+                :src="item.image" 
+                :alt="item.name"
+                :uid="'item-' + item.id"
+                :initial="true"
+                class="item-img"
+              />
 
               <div class="item-info">
                 <div class="item-name">{{ item.name }}</div>
@@ -103,6 +120,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import Popup from './Popup/Popup.vue';
+import ImageItem from './ImageItem.vue';
 
 const props = defineProps({
   looks: Array
@@ -279,7 +297,7 @@ function getHotspotStyle(item, look) {
   position: relative;
 }
 
-.look-image img {
+.look-image :deep(.image__item) {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -415,7 +433,7 @@ function getHotspotStyle(item, look) {
   justify-content: center;
 }
 
-.modal-left .look-image {
+.modal-left .look-image :deep(.image__item) {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
@@ -483,7 +501,7 @@ function getHotspotStyle(item, look) {
   margin-top: 20px;
 }
 
-.item-img {
+.item-img :deep(.image__item) {
   width: 160px;
   height: 192px;
   object-fit: contain;
@@ -554,7 +572,7 @@ function getHotspotStyle(item, look) {
     margin-bottom: 24px;
   }
 
-  .item-img {
+  .item-img :deep(.image__item) {
     width: 80px;
     height: 80px;
   }
